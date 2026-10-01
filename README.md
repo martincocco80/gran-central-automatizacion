@@ -38,4 +38,4 @@ El sistema lee los mails de los clientes, los clasifica con IA, calcula presupue
 
 ## Documentación completa
 
-https://app.notion.com/p/Gran-Central-Entrega-Final-Ecosistema-de-Automatizaci-n-IA-3ec147812e2e818088dcceae97cd435a?source=copy_link
+https://mousy-crown-61b.notion.site/Gran-Central-Entrega-Final-Ecosistema-de-Automatizaci-n-IA-3ec147812e2e818088dcceae97cd435a?source=copy_link
