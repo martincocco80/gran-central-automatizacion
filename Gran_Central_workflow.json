@@ -1,0 +1,2299 @@
+{
+  "name": "Gran Central – Presupuestos y Reclamos",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "to:martincocco80+grancentral@gmail.com -from:me"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -800,
+        -288
+      ],
+      "id": "7ae34306-60d1-4049-9779-2899a67530e8",
+      "name": "Trigger – Nuevo mail Gran Central",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BFvCvZPDsusEhxaK",
+          "name": "Gmail GranCentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "d0b17030-a8d1-482b-a49f-82e46d2a350a",
+          "mode": "list",
+          "cachedResultName": "Consultas",
+          "cachedResultUrl": "https://app.notion.com/p/6de976a4b8ca47b2b7e3dbf765388edc"
+        },
+        "title": "={{ $json.subject }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Email remitente|email",
+              "emailValue": "={{ $json.from.value[0].address }}"
+            },
+            {
+              "key": "Mensaje original|rich_text",
+              "textContent": "={{ $json.text.slice(0, 2000) }}"
+            },
+            {
+              "key": "Fecha de recepción|date",
+              "date": "={{ $json.date }}",
+              "timezone": "America/Argentina/Cordoba"
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "Pendiente"
+            },
+            {
+              "key": "Tipo|select",
+              "selectValue": "Sin clasificar"
+            },
+            {
+              "key": "Thread ID Gmail|rich_text",
+              "textContent": "={{ $json.threadId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        -352,
+        -288
+      ],
+      "id": "271b6366-4151-42e7-9ff1-fde7d99476f5",
+      "name": "Notion – Registrar consulta",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "property_producto"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -288
+      ],
+      "id": "0cdcd966-2d71-4061-859e-5c53e99bd422",
+      "name": "Unir catálogo"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        784,
+        -80
+      ],
+      "id": "a2cad69b-371c-4310-acc9-c3e83022cc88",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "LdFC2rW1m0nmCRPb",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "={\n  \"type\": \"object\",\n  \"properties\": {\n    \"tipo\": { \"type\": \"string\", \"enum\": [\"Presupuesto\", \"Reclamo\", \"Sin clasificar\"] },\n    \"producto\": { \"type\": [\"string\", \"null\"] },\n    \"medida_m\": { \"type\": [\"number\", \"null\"] },\n    \"material\": { \"type\": [\"string\", \"null\"] },\n    \"cantidad\": { \"type\": [\"number\", \"null\"] },\n    \"numero_pedido\": { \"type\": [\"string\", \"null\"] },\n    \"motivo_reclamo\": { \"type\": [\"string\", \"null\"] },\n    \"gravedad\": { \"type\": [\"string\", \"null\"] },\n    \"nombre_cliente\": { \"type\": [\"string\", \"null\"] },\n    \"datos_faltantes\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } }\n  },\n  \"required\": [\"tipo\", \"producto\", \"medida_m\", \"material\", \"cantidad\", \"numero_pedido\", \"motivo_reclamo\", \"gravedad\", \"nombre_cliente\", \"datos_faltantes\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        912,
+        -80
+      ],
+      "id": "f39328f1-a00a-4fe9-9d37-b551cce76f76",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "a1749fd3-fe26-4965-a1a9-5677a08244c5",
+          "mode": "list",
+          "cachedResultName": "Materiales",
+          "cachedResultUrl": "https://app.notion.com/p/08a31d4c0ca7404e8ff71ab6974b48d8"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        320,
+        -288
+      ],
+      "id": "5b1ffdcb-fe9b-4520-9aac-fb5fc264b049",
+      "name": "Notion – Leer materiales",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "property_material"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -288
+      ],
+      "id": "7f0c2ad7-b5eb-403b-ae3a-a646593b522a",
+      "name": "Unir materiales"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "a1f02112-ea95-4a53-b899-c76fa621219f",
+          "mode": "list",
+          "cachedResultName": "Catálogo",
+          "cachedResultUrl": "https://app.notion.com/p/dd5531d033014d85b334d699ee416c5d"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        -128,
+        -288
+      ],
+      "id": "4136b85b-8ac6-40f3-bb18-1819200f681d",
+      "name": "Notion – Leer catálogo",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Tipo|select",
+              "selectValue": "={{ $json.output.tipo }}"
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "Procesado por IA"
+            },
+            {
+              "key": "Datos extraídos IA|rich_text",
+              "textContent": "={{ JSON.stringify($json.output) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        32
+      ],
+      "id": "062d285c-e7f7-45cb-a720-66770834ec83",
+      "name": "Notion – Actualizar consulta (IA)",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "=Sos el asistente de la mueblería Gran Central. Analizá el mail de un cliente y devolvé SOLO el JSON pedido.\n\nProductos del catálogo: {{ $('Unir catálogo').first().json.property_producto.join(', ') }}\nMateriales disponibles: {{ $('Unir materiales').first().json.property_material.join(', ') }}\n\nAsunto: {{ $('Notion – Registrar consulta').first().json.property_asunto }}\nMensaje: {{ $('Notion – Registrar consulta').first().json.property_mensaje_original }}\n\nReglas:\n- tipo: \"Presupuesto\" si pide precio o fabricación, \"Reclamo\" si se queja de un pedido, \"Sin clasificar\" si no es ninguno.\n- producto: el nombre EXACTO del catálogo que corresponda. Si pide algo que no está, \"Fuera de catálogo\".\n- material: el nombre EXACTO de la lista de materiales. Si menciona uno que no está en la lista, escribilo tal cual. Si no menciona ninguno, null.\n- medida_m: medida en metros como número (ej. 1.8). null si no la dice.\n- cantidad: número de muebles pedidos. Frases como \"para 6 personas\" describen el tamaño del mueble, NO la cantidad. Si no dice cuántas unidades quiere, 1.\n- numero_pedido: formato \"GC-XXXX\" en mayúsculas si lo menciona (ej. \"gc 1001\" → \"GC-1001\"), si no null.\n- motivo_reclamo: solo para reclamos, uno de estos valores EXACTOS: \"Demora en entrega\", \"Daño en el envío\", \"Defecto de fabricación\", \"Medida incorrecta\", \"Otro\". En presupuestos, null.\n- gravedad: solo para reclamos, \"Grave\" si hay defecto de fabricación, daño en el envío o el mueble no se puede usar; \"Leve\" si es demora, medida u otra cosa menor. En presupuestos, null.\n- datos_faltantes: si es Presupuesto, revisá SOLO \"medida\" y \"material\". Si es Reclamo, revisá SOLO \"numero_pedido\" y \"motivo\". Si no falta nada, lista vacía.\n- Nunca uses texto vacío \"\": si un dato no está, usá null. No inventes datos.",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        768,
+        -288
+      ],
+      "id": "0fea5bb7-3c94-45bb-8a13-ce507742fd04",
+      "name": "IA – Clasificar y extraer",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "8c37dc07-13d6-4d4d-b0d1-ddd1218f69fe",
+          "mode": "list",
+          "cachedResultName": "Clientes",
+          "cachedResultUrl": "https://app.notion.com/p/06f609e1536c444eaed4820cf89b6412"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Email|email",
+              "condition": "equals",
+              "richTextValue": "={{ $('Notion – Registrar consulta').first().json.property_email_remitente }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        32
+      ],
+      "id": "c9b8ca58-0a18-4856-a9a7-ca1df1bf283e",
+      "name": "Notion – Buscar cliente",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6ea4c21c-ab77-439e-a5ec-d9b90c151fa1",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        32
+      ],
+      "id": "bf3e2526-7b14-4810-8c9b-89529ce382dc",
+      "name": "¿Cliente existe?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "8c37dc07-13d6-4d4d-b0d1-ddd1218f69fe",
+          "mode": "list",
+          "cachedResultName": "Clientes",
+          "cachedResultUrl": "https://app.notion.com/p/06f609e1536c444eaed4820cf89b6412"
+        },
+        "title": "={{ $('IA – Clasificar y extraer').first().json.output.nombre_cliente || 'Sin nombre' }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Tipo|select",
+              "selectValue": "Nuevo"
+            },
+            {
+              "key": "Email|email",
+              "emailValue": "={{ $('Notion – Registrar consulta').first().json.property_email_remitente }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1792,
+        96
+      ],
+      "id": "968ce949-68a6-4518-8ea2-a7c199389bea",
+      "name": "Notion – Crear cliente",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Cliente|relation",
+              "relationValue": [
+                "={{ $json.id }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2016,
+        32
+      ],
+      "id": "7c715581-317c-4d3d-ab1c-0a2582c03eb5",
+      "name": "Notion – Vincular cliente",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('IA – Clasificar y extraer').first().json.output.tipo }}",
+                    "rightValue": "Presupuesto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8955cbc9-a8b2-4a70-b394-40548d66e7bb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Presupuesto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "dbdf673e-ba8e-49e0-a80c-c0e11f609aaa",
+                    "leftValue": "={{ $('IA – Clasificar y extraer').first().json.output.tipo }}",
+                    "rightValue": "Reclamo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reclamo"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Sin clasificar"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        16
+      ],
+      "id": "cb3045f5-9bfb-4a16-baaf-df5035eb15eb",
+      "name": "Router – Tipo de consulta"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b531c46e-dde8-4576-ad61-d13997c20dc4",
+              "leftValue": "={{ $('IA – Clasificar y extraer').first().json.output.datos_faltantes.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "b0547b70-2b3d-435e-af44-a9e7366a0f3f",
+              "leftValue": "={{ $('IA – Clasificar y extraer').first().json.output.producto }}",
+              "rightValue": "Fuera de catálogo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2464,
+        -464
+      ],
+      "id": "ceafa123-5e4f-45c9-9a66-e421bbabad64",
+      "name": "¿Faltan datos?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Datos que extrajo la IA\nconst ia = $('IA – Clasificar y extraer').first().json.output;\n\n// Busca un campo por el inicio de su nombre (evita problemas con tildes y símbolos)\nconst campo = (obj, prefijo) => obj[Object.keys(obj).find(k => k.startsWith(prefijo))];\n\n// Buscar producto y material en lo que leímos de Notion\nconst producto = $('Notion – Leer catálogo').all().find(p => p.json.property_producto === ia.producto);\nconst material = $('Notion – Leer materiales').all().find(m => m.json.property_material === ia.material);\n\nif (!producto) throw new Error(`Producto no encontrado en catálogo: ${ia.producto}`);\nif (!material) throw new Error(`Material no encontrado: ${ia.material}`);\n\nconst precioBase = campo(producto.json, 'property_precio');\nconst unidad = campo(producto.json, 'property_unidad');\nconst plazo = campo(producto.json, 'property_plazo');\nconst recargo = campo(material.json, 'property_recargo') || 0;\n\n// Por metro lineal se multiplica por la medida; por unidad, no\nconst factorMedida = unidad === 'Por metro lineal' ? ia.medida_m : 1;\nconst cantidad = ia.cantidad || 1;\n\nconst total = Math.round(precioBase * factorMedida * (1 + recargo) * cantidad);\n\nreturn [{\n  json: {\n    producto: ia.producto,\n    producto_id: producto.json.id,\n    material: ia.material,\n    material_id: material.json.id,\n    medida_m: ia.medida_m,\n    cantidad,\n    precio_base: precioBase,\n    recargo_material: recargo,\n    unidad_precio: unidad,\n    plazo_dias: plazo,\n    total\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        -464
+      ],
+      "id": "ff8812d9-1fcf-45c5-baba-a6c6e180cc59",
+      "name": "Calcular presupuesto",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {
+          "maxTokensToSample": 1024,
+          "temperature": 0.6
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2992,
+        -240
+      ],
+      "id": "291cf8e2-5391-4ed1-b516-f4defbcd3328",
+      "name": "Groq Chat Model1",
+      "notesInFlow": false,
+      "credentials": {
+        "groqApi": {
+          "id": "LdFC2rW1m0nmCRPb",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos el equipo de atención al cliente de la mueblería Gran Central. Redactá un mail breve y cordial respondiendo la consulta de {{ $('IA – Clasificar y extraer').first().json.output.nombre_cliente || 'el cliente' }}.\n\nDatos del presupuesto (usalos tal cual, NO modifiques ninguna cifra):\n- Producto: {{ $json.producto }}\n- Medida: {{ $json.medida_m }} m\n- Material: {{ $json.material }}\n- Cantidad: {{ $json.cantidad }}\n- Precio total: ${{ $json.total.toLocaleString('es-AR') }}\n- Plazo de fabricación: {{ $json.plazo_dias }} días\n\nMensaje original del cliente:\n{{ $('Notion – Registrar consulta').first().json.property_mensaje_original }}\n\nReglas:\n- Máximo 120 palabras, tono cálido y profesional.\n- Respondé las preguntas del cliente usando solo los datos de arriba.\n- No inventes descuentos, formas de pago, envíos ni condiciones que no estén en los datos.\n- Terminá invitando a confirmar el pedido respondiendo este mail.\n- Firmá como \"Equipo Gran Central\".\n- Devolvé solo el cuerpo del mail, sin asunto.\n- Copiá el plazo exactamente como \"X días\", sin agregar \"hábiles\" ni otras palabras.\n- Escribí en español rioplatense, tuteando con \"vos\" (ej. \"si querés avanzar, confirmá...\").\nponer \"X días\" sin la palabra \"hábiles\" y usar siempre voseo.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2912,
+        -464
+      ],
+      "id": "27db639b-2813-43c7-a784-6999f4d630bb",
+      "name": "Redactar presupuesto",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "ec950375-3c1e-4691-a05f-3013eed657b4",
+          "mode": "list",
+          "cachedResultName": "Presupuestos",
+          "cachedResultUrl": "https://app.notion.com/p/26e4ed7298a44904b6d72e19513a1d84"
+        },
+        "title": "={{ 'P-' + $now.toFormat('yyyyMMdd-HHmm') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Consulta|relation",
+              "relationValue": [
+                "={{ $('Notion – Registrar consulta').first().json.id }}"
+              ]
+            },
+            {
+              "key": "Cliente|relation",
+              "relationValue": [
+                "={{ $('Notion – Vincular cliente').first().json.property_cliente[0] }}"
+              ]
+            },
+            {
+              "key": "Producto|relation",
+              "relationValue": [
+                "={{ $('Calcular presupuesto').first().json.producto_id }}"
+              ]
+            },
+            {
+              "key": "Material|relation",
+              "relationValue": [
+                "={{ $('Calcular presupuesto').first().json.material_id }}"
+              ]
+            },
+            {
+              "key": "Medidas|rich_text",
+              "textContent": "={{ $('Calcular presupuesto').first().json.medida_m }} m"
+            },
+            {
+              "key": "Cantidad|number",
+              "numberValue": "={{ $('Calcular presupuesto').first().json.cantidad }}"
+            },
+            {
+              "key": "Total|number",
+              "numberValue": "={{ $('Calcular presupuesto').first().json.total }}"
+            },
+            {
+              "key": "Borrador IA|rich_text",
+              "textContent": "={{ $json.text.slice(0, 2000) }}"
+            },
+            {
+              "key": "Estado de aprobación|select",
+              "selectValue": "Pendiente"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3328,
+        -480
+      ],
+      "id": "3effecb3-8fa0-4412-b208-db2715c3aa3c",
+      "name": "Notion – Crear presupuesto",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "En revisión humana"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3616,
+        -272
+      ],
+      "id": "20d36ae3-0dac-4548-a7d8-453aa7b06958",
+      "name": "Notion – Consulta en revisión",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Config – Parámetros').first().json.email_aprobador }}",
+        "subject": "=  Aprobación requerida – Presupuesto {{ $('Notion – Crear presupuesto').first().json.name }}",
+        "message": "=  Nuevo presupuesto para revisar:\n\n  Cliente: {{ $('IA – Clasificar y extraer').first().json.output.nombre_cliente }} ({{ $('Notion – Registrar consulta').first().json.property_email_remitente }})\n  Producto: {{ $('Calcular presupuesto').first().json.producto }} – {{ $('Calcular presupuesto').first().json.medida_m }} m – {{ $('Calcular presupuesto').first().json.material }}\n  Total: ${{ $('Calcular presupuesto').first().json.total.toLocaleString('es-AR') }}\n\n  Borrador que se enviará al cliente:\n  ----------------\n  {{ $('Redactar presupuesto').first().json.text }}\n  ----------------",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Aprobar y enviar",
+            "disapproveLabel": "Rechazar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": "={{ $('Config – Parámetros').first().json.horas_espera_aprobacion }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3840,
+        -272
+      ],
+      "id": "fba2c35a-6f0e-472c-b93c-242d61b2990c",
+      "name": "Gmail – Solicitar aprobación",
+      "webhookId": "21c2fbd9-4f78-4542-95bd-f80391f86a5c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BFvCvZPDsusEhxaK",
+          "name": "Gmail GranCentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aa6a8e3e-c156-44c8-bd7b-75ec704e806d",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4064,
+        -272
+      ],
+      "id": "a3bd6ae8-8c5d-46c8-9fe5-1a982907cff7",
+      "name": "¿Aprobado?"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Notion – Registrar consulta').first().json.property_thread_id_gmail }}",
+        "emailType": "text",
+        "message": "=  {{ $('Redactar presupuesto').first().json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4288,
+        -416
+      ],
+      "id": "cb30e859-881e-4801-9e2f-3542570a1875",
+      "name": "Gmail – Responder al cliente",
+      "webhookId": "6e4b1336-3e09-467b-931c-182d8a5c42e9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BFvCvZPDsusEhxaK",
+          "name": "Gmail GranCentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Respondido"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4512,
+        -416
+      ],
+      "id": "a4ee0bc1-696f-4c07-abf8-e1d7c8383318",
+      "name": "Notion – Consulta respondida",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "=  {{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Rechazado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4288,
+        -160
+      ],
+      "id": "e4b5473f-7f4c-4282-a88e-ea8c408aa2ed",
+      "name": "Notion – Consulta rechazada",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "042e1d69-a4a6-471e-938f-72919a469699",
+          "mode": "list",
+          "cachedResultName": "Pedidos",
+          "cachedResultUrl": "https://app.notion.com/p/fd58bd86721d43889c8f95ad82bb512b"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "N° pedido|title",
+              "condition": "equals",
+              "richTextValue": "=  {{ $('IA – Clasificar y extraer').first().json.output.numero_pedido || 'SIN-NUMERO' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2464,
+        32
+      ],
+      "id": "9d684bef-d818-4a28-a779-74f8ed6de109",
+      "name": "Notion – Buscar pedido",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0d3b112e-654b-4477-a739-f89e77fc21c7",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2688,
+        32
+      ],
+      "id": "9d1b9fe7-97cb-4425-9e0d-29de5bb5883c",
+      "name": "¿Pedido encontrado?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "84b2653c-4227-41cd-be63-b76c6633db61",
+          "mode": "list",
+          "cachedResultName": "Reclamos",
+          "cachedResultUrl": "https://app.notion.com/p/c04e07894d7b4633bf86fc57058c118f"
+        },
+        "title": "=  Reclamo {{ $json.property_n_pedido }} – {{ $('IA – Clasificar y extraer').first().json.output.motivo_reclamo }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Cliente|relation",
+              "relationValue": [
+                "={{ $json.property_cliente[0] }}"
+              ]
+            },
+            {
+              "key": "Consulta|relation",
+              "relationValue": [
+                "={{ $('Notion – Registrar consulta').first().json.id }}"
+              ]
+            },
+            {
+              "key": "Pedido|relation",
+              "relationValue": [
+                "={{ $json.id }}"
+              ]
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "Pendiente"
+            },
+            {
+              "key": "Gravedad|select",
+              "selectValue": "={{ $('IA – Clasificar y extraer').first().json.output.gravedad }}"
+            },
+            {
+              "key": "Motivo|select",
+              "selectValue": "={{ $('IA – Clasificar y extraer').first().json.output.motivo_reclamo }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2976,
+        -16
+      ],
+      "id": "15583951-6489-46b1-ac6e-d9c7d655184f",
+      "name": "Notion – Crear reclamo",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos el asistente de atención al cliente de la mueblería Gran Central. Redactá la respuesta a un reclamo.\n\nCliente: {{ $('IA – Clasificar y extraer').first().json.output.nombre_cliente }}\nPedido: {{ $('Notion – Buscar pedido').first().json.property_n_pedido }}\nEstado del pedido: {{ $('Notion – Buscar pedido').first().json.property_estado }}\nFecha de entrega: {{ $('Notion – Buscar pedido').first().json.property_fecha_de_entrega.start }}\nMotivo: {{ $json.property_motivo }}\nGravedad: {{ $json.property_gravedad }}\nMensaje del cliente: {{ $('Notion – Registrar consulta').first().json.property_mensaje_original }}\n\nReglas:\n- Escribí en español rioplatense, tuteando con \"vos\".\n- Empezá saludando por el nombre y disculpándote por el inconveniente, sin exagerar.\n- Si la gravedad es \"Grave\": decile que un asesor lo va a contactar para coordinar la revisión del mueble, y pedile que responda este mail con fotos del problema.\n- Si la gravedad es \"Leve\": respondé su inquietud con los datos del pedido (estado y fecha de entrega).\n- No prometas reembolsos, descuentos, plazos ni soluciones concretas que no estén en estos datos.\n- Mencioná el número de pedido.\n- Máximo 120 palabras. Firmá como \"Equipo Gran Central\".\n- Devolvé solo el texto del mail, sin asunto.\n- Usá siempre las formas del voseo: \"respondé\", \"mandanos\", \"contanos\" (nunca \"responde\", \"envía\", \"cuéntanos\").\n- Hablá en plural, en nombre del equipo (\"lamentamos\", \"vamos a coordinar\").",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3264,
+        -16
+      ],
+      "id": "2007f371-b315-4e8f-8a96-30b0752c4981",
+      "name": "Redactar respuesta reclamo",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {
+          "maxTokensToSample": 1024,
+          "temperature": 0.6
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        176
+      ],
+      "id": "8426ee8a-8f29-4faf-a29b-019f49d88808",
+      "name": "Groq Chat Model2",
+      "notesInFlow": false,
+      "credentials": {
+        "groqApi": {
+          "id": "LdFC2rW1m0nmCRPb",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Crear reclamo').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Respuesta IA|rich_text",
+              "textContent": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3616,
+        48
+      ],
+      "id": "fbf9111b-2d0d-4d12-9e7f-52191880864b",
+      "name": "Notion – Reclamo en revisión",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "En revisión humana"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3840,
+        48
+      ],
+      "id": "266decde-8b03-4de1-b88f-09c2ec850b22",
+      "name": "Notion – Consulta en revisión (reclamo)",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "={{ $('Config – Parámetros').first().json.email_aprobador }}",
+        "subject": "=  Aprobación requerida – {{ $('Notion – Crear reclamo').first().json.name.trim() }} ({{ $('Notion – Crear reclamo').first().json.property_gravedad }})",
+        "message": "=   Nuevo reclamo para revisar:\n\n  Cliente: {{ $('IA – Clasificar y extraer').first().json.output.nombre_cliente }} ({{ $('Notion – Registrar consulta').first().json.property_email_remitente }})\n  Pedido: {{ $('Notion – Buscar pedido').first().json.property_n_pedido }}\n  Motivo: {{ $('Notion – Crear reclamo').first().json.property_motivo }}\n  Gravedad: {{ $('Notion – Crear reclamo').first().json.property_gravedad }}\n\n  Mensaje del cliente:\n  {{ $('Notion – Registrar consulta').first().json.property_mensaje_original }}\n\n  Borrador que se enviará al cliente:\n  ----------------\n  {{ $('Redactar respuesta reclamo').first().json.text }}\n  ----------------",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Aprobar y enviar",
+            "disapproveLabel": "Rechazar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "resumeAmount": "={{ $('Config – Parámetros').first().json.horas_espera_aprobacion }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4064,
+        48
+      ],
+      "id": "080997e8-9667-44b7-ac63-1df4d917806a",
+      "name": "Gmail – Solicitar aprobación reclamo",
+      "webhookId": "21c2fbd9-4f78-4542-95bd-f80391f86a5c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BFvCvZPDsusEhxaK",
+          "name": "Gmail GranCentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aa6a8e3e-c156-44c8-bd7b-75ec704e806d",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4288,
+        48
+      ],
+      "id": "ce639e4c-4fa9-429f-9c2c-7dcf66829e3f",
+      "name": "¿Aprobado?1"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Notion – Registrar consulta').first().json.property_thread_id_gmail }}",
+        "emailType": "text",
+        "message": "={{ $('Redactar respuesta reclamo').first().json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4512,
+        -64
+      ],
+      "id": "4bbac7c3-caba-41ae-b6a7-18e72f9e9ba5",
+      "name": "Gmail – Responder reclamo",
+      "webhookId": "6e4b1336-3e09-467b-931c-182d8a5c42e9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BFvCvZPDsusEhxaK",
+          "name": "Gmail GranCentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Crear reclamo').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Enviado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4736,
+        -64
+      ],
+      "id": "8ab46f87-96bf-4151-a75b-81fbc36f0a4b",
+      "name": "Notion – Reclamo enviado",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Respondido"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4960,
+        -64
+      ],
+      "id": "23b3b3a2-126c-49f5-b2ce-4511553c4f31",
+      "name": "Notion – Consulta respondida (reclamo)",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Crear reclamo').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Rechazado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4512,
+        128
+      ],
+      "id": "5eb955db-2617-4d48-b124-79c3aef7510e",
+      "name": "Notion – Reclamo rechazado",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Rechazado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4736,
+        128
+      ],
+      "id": "ef831f2b-3175-4628-8659-0e3ecbafa207",
+      "name": "Consulta rechazada (reclamo)",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Revisión manual"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2976,
+        192
+      ],
+      "id": "1fcc4244-047e-4ac5-9ae6-a82fa8605613",
+      "name": "Notion – Revisión manual",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "7730fae0-63c9-4766-bb22-59d30e3c44e1",
+          "mode": "list",
+          "cachedResultName": "Log de errores",
+          "cachedResultUrl": "https://app.notion.com/p/dc877f4fa603439aafddab6f0ede34cf"
+        },
+        "title": "=Falla en {{ $prevNode.name }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Consulta|relation",
+              "relationValue": [
+                "={{ $('Notion – Registrar consulta').first().json.id }}"
+              ]
+            },
+            {
+              "key": "Detalle|rich_text",
+              "textContent": "={{ $json.error?.message || $json.error || 'Error sin detalle' }}"
+            },
+            {
+              "key": "Nodo donde falló|rich_text",
+              "textContent": "={{ $prevNode.name }}"
+            },
+            {
+              "key": "Tipo de error|select",
+              "selectValue": "={{ ($prevNode?.name ?? '') === 'Calcular presupuesto' ? (String($json.error?.message || $json.error || '').includes('Material') ? 'Material no disponible' : 'Producto fuera de catálogo') : (($prevNode?.name ?? '').startsWith('Notion') ? 'Otro' : 'Falla API IA') }}"
+            },
+            {
+              "key": "Resuelto|checkbox"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3616,
+        -464
+      ],
+      "id": "69ec0e9c-56ee-4519-96d3-8b157f263431",
+      "name": "Notion – Registrar error",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Registrar consulta').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        3840,
+        -464
+      ],
+      "id": "38763827-3515-439c-8945-c39dd92868e6",
+      "name": "Notion – Consulta con error",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 1. Entrada y contexto\nDetecta el mail nuevo, lo registra en Notion (Pendiente) y lee catálogo y materiales para darle contexto a la IA.",
+        "height": 112,
+        "width": 512
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -448
+      ],
+      "id": "5738efef-fc4a-4a45-97d0-1e8c1214aeb6",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 2. Clasificación con IA\nGroq clasifica la consulta (Presupuesto / Reclamo / Sin clasificar) y extrae los datos en JSON estructurado. Reintenta 3 veces si falla.",
+        "height": 128,
+        "width": 464,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -464
+      ],
+      "id": "7e006282-dabe-4a93-bb26-e9032e5a84f6",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 3. Cliente y ruteo\nGuarda el resultado de la IA, busca al cliente por email (o lo crea si es nuevo), lo vincula y deriva la consulta según su tipo.",
+        "height": 128,
+        "width": 512,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        -128
+      ],
+      "id": "a40616f8-9bfa-458d-872a-1d9c9f29554f",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## 4. Rama presupuestos\nCalcula el precio con el catálogo, la IA redacta el presupuesto y se guarda en Notion.",
+        "height": 96,
+        "width": 608,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2336,
+        -608
+      ],
+      "id": "b9b16158-7095-40d6-8680-d7766b5a1b34",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## 5. Rama reclamos\nValida el número de pedido, crea el reclamo con motivo y gravedad, y la IA redacta la respuesta.",
+        "height": 128,
+        "width": 656,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        -144
+      ],
+      "id": "45e104ff-2008-4cd8-93b4-d1a00dfd14f3",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## 6. Aprobación humana (HITL)\nNada llega al cliente sin aprobación. El flujo se pausa hasta que un responsable aprueba o rechaza desde el mail (límite: 48 h).",
+        "height": 112,
+        "width": 544,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3632,
+        -80
+      ],
+      "id": "40d15e76-7ccb-47cc-a7c0-fbf4776c79db",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## 7. Respuesta y cierre\nSi se aprueba, responde en el mismo hilo del cliente y marca Respondido. Si se rechaza, queda como Rechazado.",
+        "height": 112,
+        "width": 464,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4288,
+        -528
+      ],
+      "id": "5029a55f-ee2c-4b45-abbb-ef5a274693e4",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## 8. Revisión manual\nConsultas sin clasificar, con datos incompletos o con pedido inexistente quedan marcadas para que las revise una persona.",
+        "height": 112,
+        "width": 400,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2656,
+        352
+      ],
+      "id": "b9541e64-8c67-48cb-b3a1-3ec83a02af07",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## 9. Manejo de errores\nSi una IA falla después de 3 intentos, se registra en el Log de errores con el nodo y el detalle, y la consulta pasa a estado Error.",
+        "height": 112,
+        "width": 576,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        -592
+      ],
+      "id": "83575e2a-a48e-4bdd-9c67-d6c83ea7c327",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "82757f87-a517-488f-aadf-7227106f802b",
+              "name": "=email_aprobador",
+              "value": "martincocco80@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "70104ebf-e952-4f94-b469-5172ae6bf411",
+              "name": "=horas_espera_aprobacion",
+              "value": 48,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -576,
+        -288
+      ],
+      "id": "4970dd7b-d68e-4ac5-8657-04311b103063",
+      "name": "Config – Parámetros"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Crear presupuesto').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "=Estado de aprobación|select",
+              "selectValue": "=Aprobado"
+            },
+            {
+              "key": "=Fecha de aprobación|date",
+              "date": "={{ $now.toISO() }}",
+              "timezone": "America/Argentina/Cordoba"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4736,
+        -416
+      ],
+      "name": "Notion – Presupuesto aprobado",
+      "id": "95f291ca-4490-44b9-abe7-1ec87199d8bd",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Notion – Crear presupuesto').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "=Estado de aprobación|select",
+              "selectValue": "=Rechazado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        4608,
+        -224
+      ],
+      "name": "Notion – Presupuesto rechazado",
+      "id": "65657225-d9cc-4383-9954-601be7a5b251",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "AgXsiFKKydm63nnM",
+          "name": "Notion Grancentral"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Trigger – Nuevo mail Gran Central": {
+      "main": [
+        [
+          {
+            "node": "Config – Parámetros",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Registrar consulta": {
+      "main": [
+        [
+          {
+            "node": "Notion – Leer catálogo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unir catálogo": {
+      "main": [
+        [
+          {
+            "node": "Notion – Leer materiales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "IA – Clasificar y extraer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "IA – Clasificar y extraer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Leer materiales": {
+      "main": [
+        [
+          {
+            "node": "Unir materiales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unir materiales": {
+      "main": [
+        [
+          {
+            "node": "IA – Clasificar y extraer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Leer catálogo": {
+      "main": [
+        [
+          {
+            "node": "Unir catálogo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA – Clasificar y extraer": {
+      "main": [
+        [
+          {
+            "node": "Notion – Actualizar consulta (IA)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Registrar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Actualizar consulta (IA)": {
+      "main": [
+        [
+          {
+            "node": "Notion – Buscar cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Buscar cliente": {
+      "main": [
+        [
+          {
+            "node": "¿Cliente existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Cliente existe?": {
+      "main": [
+        [
+          {
+            "node": "Notion – Vincular cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Crear cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Crear cliente": {
+      "main": [
+        [
+          {
+            "node": "Notion – Vincular cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Vincular cliente": {
+      "main": [
+        [
+          {
+            "node": "Router – Tipo de consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router – Tipo de consulta": {
+      "main": [
+        [
+          {
+            "node": "¿Faltan datos?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Buscar pedido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Revisión manual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Faltan datos?": {
+      "main": [
+        [
+          {
+            "node": "Notion – Revisión manual",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Calcular presupuesto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular presupuesto": {
+      "main": [
+        [
+          {
+            "node": "Redactar presupuesto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Registrar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Redactar presupuesto",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redactar presupuesto": {
+      "main": [
+        [
+          {
+            "node": "Notion – Crear presupuesto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Registrar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Crear presupuesto": {
+      "main": [
+        [
+          {
+            "node": "Notion – Consulta en revisión",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Registrar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Consulta en revisión": {
+      "main": [
+        [
+          {
+            "node": "Gmail – Solicitar aprobación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – Solicitar aprobación": {
+      "main": [
+        [
+          {
+            "node": "¿Aprobado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Aprobado?": {
+      "main": [
+        [
+          {
+            "node": "Gmail – Responder al cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Consulta rechazada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – Responder al cliente": {
+      "main": [
+        [
+          {
+            "node": "Notion – Consulta respondida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Buscar pedido": {
+      "main": [
+        [
+          {
+            "node": "¿Pedido encontrado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pedido encontrado?": {
+      "main": [
+        [
+          {
+            "node": "Notion – Crear reclamo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Revisión manual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Crear reclamo": {
+      "main": [
+        [
+          {
+            "node": "Redactar respuesta reclamo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Redactar respuesta reclamo",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redactar respuesta reclamo": {
+      "main": [
+        [
+          {
+            "node": "Notion – Reclamo en revisión",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Registrar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Reclamo en revisión": {
+      "main": [
+        [
+          {
+            "node": "Notion – Consulta en revisión (reclamo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Consulta en revisión (reclamo)": {
+      "main": [
+        [
+          {
+            "node": "Gmail – Solicitar aprobación reclamo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – Solicitar aprobación reclamo": {
+      "main": [
+        [
+          {
+            "node": "¿Aprobado?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Aprobado?1": {
+      "main": [
+        [
+          {
+            "node": "Gmail – Responder reclamo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion – Reclamo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail – Responder reclamo": {
+      "main": [
+        [
+          {
+            "node": "Notion – Reclamo enviado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Reclamo enviado": {
+      "main": [
+        [
+          {
+            "node": "Notion – Consulta respondida (reclamo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Reclamo rechazado": {
+      "main": [
+        [
+          {
+            "node": "Consulta rechazada (reclamo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Registrar error": {
+      "main": [
+        [
+          {
+            "node": "Notion – Consulta con error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Consulta respondida": {
+      "main": [
+        [
+          {
+            "node": "Notion – Presupuesto aprobado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config – Parámetros": {
+      "main": [
+        [
+          {
+            "node": "Notion – Registrar consulta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion – Consulta rechazada": {
+      "main": [
+        [
+          {
+            "node": "Notion – Presupuesto rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "d80a850f-ef84-4f0c-92da-9a886becde05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9e4973f7abe77367cc48061cb967efccae05a40968d11f457f3b944eb39ee8f4"
+  },
+  "nodeGroups": [],
+  "id": "16OkLSEed25sFJNX",
+  "tags": []
+}
